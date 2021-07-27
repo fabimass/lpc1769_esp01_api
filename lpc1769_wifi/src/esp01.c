@@ -27,14 +27,21 @@ void UART_HANDLER (void)
 
 
 	/* Saves the data received into the ring buffer and checks for the end of frame */
-	for ( uint8_t i ; i<8 ; i++) {
+	for ( uint8_t i=0 ; i<8 ; i++) {
 
-		rx_buffer[index] = rx[i];
+		if ( esp01_flag == ESP01_WAITING )
+			rx_buffer[index] = rx[i];
+		else
+			rx_buffer[index] = '\0';
+
 		index++;
 		if ( index >= RX_BUFFER_LENGTH ) { index = 0; }
 
 		/* Checks for the OK statement */
 		if ( last_char=='O' && rx[i]=='K' ) { esp01_flag = ESP01_READY; }
+
+		/* Update the last byte analyzed */
+		last_char = rx[i];
 
 	}
 
@@ -72,16 +79,24 @@ void esp01_init( void ){
 /* Send a command to the module */
 uint8_t* esp01_command( uint8_t* command ){
 
-	uint8_t aaa;
-	//Chip_UART_SendByte(LPC_UART3, tx[i]);
+	uint32_t i=0;
 
-	uint32_t i = 0;
-
+	/* Go trough the string received sending each byte through the UART */
 	while ( command[i] != '\0' ){
 
-		aaa = command[i];
+		Chip_UART_SendByte(UART_POINTER, command[i]);
 		i++;
 	}
 
-	return command;
+	/* The command has to end with \r\n in order to be recognized by the ESP01 */
+	Chip_UART_SendByte(UART_POINTER, '\r');
+	Chip_UART_SendByte(UART_POINTER, '\n');
+
+	/* Wait until it receives the answer */
+	while ( esp01_flag != ESP01_READY );
+
+	/* Reset the flag */
+	esp01_flag = ESP01_WAITING;
+
+	return rx_buffer;
 }
