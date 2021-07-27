@@ -7,6 +7,10 @@ int main(void) {
 
     SystemCoreClockUpdate();
 
+    esp01_init();
+
+    esp01_command("ATFA");
+
     volatile static int i = 0 ;
     // Enter an infinite loop, just incrementing a counter
     while(1) {
