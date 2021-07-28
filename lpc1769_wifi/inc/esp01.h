@@ -3,24 +3,21 @@
 #define ESP01_H_
 
 
-/* *******************************************
- *           User customizable
- *********************************************/
 
-/* Define the UART where the ESP01 is connected */
+/**
+ * @brief	Define the UART where the ESP01 is connected
+ */
 #define UART3
 
-/* Set the length of the receiver ring buffer */
+/**
+ * @brief	Set the length of the receiver ring buffer
+ */
 #define RX_BUFFER_LENGTH	64
 
 
-
-/* *******************************************
- *           Private declarations
- *********************************************/
-
-/* UART specific definitions */
-
+/**
+ * @brief	UART Specific definitions
+ */
 #ifdef UART0
 #define UART_POINTER 	LPC_UART0
 #define UART_HANDLER	UART0_IRQHandler
@@ -66,25 +63,28 @@
 #endif
 
 
-/* LPCOpen dependency */
+/**
+ * @brief	LPCOpen dependency
+ */
 #include "chip.h"
 
 
-/* Different states of the ESP01 flag */
+/**
+ * @brief	Different states of the ESP01
+ */
 typedef enum{
 	ESP01_READY,
-	ESP01_WAITING
+	ESP01_BUSY,
+	ESP01_OK,
+	ESP01_ERROR
 }ESP01_STATE;
 
 
-
-
-/* *******************************************
- *           Available functions
- *********************************************/
-
-/* Module initialization */
-void esp01_init( void );
+/**
+ * @brief	Initialize the ESP01
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_init( void );
 
 
 /**
@@ -93,7 +93,7 @@ void esp01_init( void );
  * @param   numBytesToSend : Size of the passed command
  * @param	answer         : Pointer to bytes array to fill with the answer
  * @param	numBytesToRead : Size of the passed answer data array
- * @return Nothing
+ * @return  Nothing
  */
 void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead );
 

@@ -8,7 +8,7 @@ volatile uint8_t rx_buffer[RX_BUFFER_LENGTH];
 volatile uint8_t index = 0;
 
 /* ESP01 state flag */
-volatile ESP01_STATE esp01_flag = ESP01_WAITING;
+volatile ESP01_STATE esp01_flag = ESP01_READY;
 
 
 /* UART Interruption handler */
@@ -29,7 +29,7 @@ void UART_HANDLER (void)
 	/* Saves the data received into the ring buffer and checks for the end of frame */
 	for ( uint8_t i=0 ; i<8 ; i++) {
 
-		if ( esp01_flag == ESP01_WAITING )
+		if ( esp01_flag == ESP01_BUSY )
 			rx_buffer[index] = rx[i];
 		else
 			rx_buffer[index] = '\0';
@@ -50,7 +50,7 @@ void UART_HANDLER (void)
 
 
 /* Module initialization */
-void esp01_init( void ){
+ESP01_STATE esp01_init( void ){
 
 	/* Initialize the UART pin */
 	Chip_IOCON_PinMux(LPC_IOCON,TX_PORT,TX_PIN,IOCON_MODE_INACT,PIN_FUNCTION);
@@ -81,6 +81,13 @@ void esp01_init( void ){
 	/* Check communication */
 	esp01_command( "AT", 2, answer, 10 );
 
+	/* Check response */
+	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
+		return ESP01_OK;
+
+	else
+		return ESP01_ERROR;
+
 }
 
 
@@ -89,6 +96,9 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
 
 	/* Saves the current position in the ring buffer */
 	uint32_t start=index;
+
+	/* Set the state to busy before starting the communication */
+	esp01_flag = ESP01_BUSY;
 
 	/* Go trough the string received sending each byte through the UART */
 	for ( uint32_t i=0 ; i<numBytesToSend ; i++ ){
@@ -102,9 +112,6 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
 
 	/* Wait until it receives the answer */
 	while ( esp01_flag != ESP01_READY );
-
-	/* Reset the flag */
-	esp01_flag = ESP01_WAITING;
 
 	/* Fill the passed array */
 	for ( uint32_t i=0 ; i<numBytesToRead ; i++){

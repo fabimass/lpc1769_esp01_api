@@ -7,7 +7,11 @@ int main(void) {
 
     SystemCoreClockUpdate();
 
-    esp01_init();
+    if ( esp01_init() == ESP01_OK ){
+
+
+
+    }
 
     //uint8_t answer[RX_BUFFER_LENGTH];
     //esp01_command("AT", answer, RX_BUFFER_LENGTH);
