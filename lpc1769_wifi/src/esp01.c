@@ -75,6 +75,9 @@ void esp01_init( void ){
 
 	uint8_t answer[10];
 
+	/* Disabling echo */
+	esp01_command( "ATE0", 4, answer, 10 );
+
 	/* Check communication */
 	esp01_command( "AT", 2, answer, 10 );
 
