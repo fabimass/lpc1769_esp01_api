@@ -75,8 +75,14 @@ ESP01_STATE esp01_init( void ){
 
 	uint8_t answer[10];
 
+	/* Clean answer array */
+	for ( uint32_t i=0 ; i<10 ; i++ ) { answer[i]='\0'; }
+
 	/* Disabling echo */
 	esp01_command( "ATE0", 4, answer, 10 );
+
+	/* Clean answer array */
+	for ( uint32_t i=0 ; i<10 ; i++ ) { answer[i]='\0'; }
 
 	/* Check communication */
 	esp01_command( "AT", 2, answer, 10 );

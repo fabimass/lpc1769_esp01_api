@@ -4,12 +4,13 @@
 
 int main(void) {
 
+	uint32_t aa;
 
     SystemCoreClockUpdate();
 
     if ( esp01_init() == ESP01_OK ){
 
-
+    	aa=0;
 
     }
 
