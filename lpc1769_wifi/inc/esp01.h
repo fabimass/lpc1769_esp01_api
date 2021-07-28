@@ -89,12 +89,13 @@ void esp01_init( void );
 
 /**
  * @brief	Send a command to the ESP01
- * @param	command	 : Pointer to the command to send
- * @param	answer   : Pointer to bytes array to fill with the answer
- * @param	numBytes : Size of the passed data array
+ * @param	command	       : Pointer to the command to send
+ * @param   numBytesToSend : Size of the passed command
+ * @param	answer         : Pointer to bytes array to fill with the answer
+ * @param	numBytesToRead : Size of the passed answer data array
  * @return Nothing
  */
-void esp01_command( uint8_t* command, uint8_t* answer, uint32_t numBytes );
+void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead );
 
 
 

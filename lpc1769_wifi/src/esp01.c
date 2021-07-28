@@ -76,24 +76,21 @@ void esp01_init( void ){
 	uint8_t answer[10];
 
 	/* Check communication */
-	esp01_command( "AT", answer, 10 );
+	esp01_command( "AT", 2, answer, 10 );
 
 }
 
 
 /* Send a command to the module */
-void esp01_command( uint8_t* command, uint8_t* answer, uint32_t numBytes ){
-
-	uint32_t i=0;
+void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead ){
 
 	/* Saves the current position in the ring buffer */
 	uint32_t start=index;
 
 	/* Go trough the string received sending each byte through the UART */
-	while ( command[i] != '\0' ){
+	for ( uint32_t i=0 ; i<numBytesToSend ; i++ ){
 
 		Chip_UART_SendByte(UART_POINTER, command[i]);
-		i++;
 	}
 
 	/* The command has to end with \r\n in order to be recognized by the ESP01 */
@@ -107,7 +104,7 @@ void esp01_command( uint8_t* command, uint8_t* answer, uint32_t numBytes ){
 	esp01_flag = ESP01_WAITING;
 
 	/* Fill the passed array */
-	for ( i=0 ; i<numBytes ; i++){
+	for ( uint32_t i=0 ; i<numBytesToRead ; i++){
 
 		answer[i] = rx_buffer[start + i];
 	}
