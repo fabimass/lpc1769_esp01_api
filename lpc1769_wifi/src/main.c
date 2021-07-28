@@ -10,7 +10,7 @@ int main(void) {
 
     if ( esp01_init() == ESP01_OK ){
 
-    	aa=0;
+    	esp01_host_mode();
 
     }
 

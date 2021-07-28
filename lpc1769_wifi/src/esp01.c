@@ -73,19 +73,19 @@ ESP01_STATE esp01_init( void ){
 	NVIC_EnableIRQ(UART_INTERRUPT);
 
 
-	uint8_t answer[10];
+	uint8_t answer[4];
 
 	/* Clean answer array */
-	for ( uint32_t i=0 ; i<10 ; i++ ) { answer[i]='\0'; }
+	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
 
 	/* Disabling echo */
-	esp01_command( "ATE0", 4, answer, 10 );
+	esp01_command( "ATE0", 4, answer, sizeof(answer) );
 
 	/* Clean answer array */
-	for ( uint32_t i=0 ; i<10 ; i++ ) { answer[i]='\0'; }
+	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
 
 	/* Check communication */
-	esp01_command( "AT", 2, answer, 10 );
+	esp01_command( "AT", 2, answer, sizeof(answer) );
 
 	/* Check response */
 	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
@@ -124,5 +124,32 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
 
 		answer[i] = rx_buffer[start + i];
 	}
+
+}
+
+
+/* Set the ESP01 in host mode */
+ESP01_STATE esp01_host_mode( void ){
+
+	uint8_t answer[4];
+
+	/* Clean answer array */
+	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
+
+	/* Disabling echo */
+	esp01_command( "AT+CWMODE=2", 11, answer, sizeof(answer) );
+
+	/* Check response */
+	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
+		return ESP01_OK;
+
+	else
+		return ESP01_ERROR;
+}
+
+
+/* Set the ESP01 in client mode */
+ESP01_STATE esp01_client_mode( void ){
+
 
 }

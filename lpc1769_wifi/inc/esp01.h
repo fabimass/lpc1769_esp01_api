@@ -80,6 +80,7 @@ typedef enum{
 }ESP01_STATE;
 
 
+
 /**
  * @brief	Initialize the ESP01
  * @return  OK if success or ERROR
@@ -96,6 +97,20 @@ ESP01_STATE esp01_init( void );
  * @return  Nothing
  */
 void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead );
+
+
+/**
+ * @brief	Set the ESP01 in host mode
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_host_mode( void );
+
+
+/**
+ * @brief	Set the ESP01 in client mode
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_client_mode( void );
 
 
 
