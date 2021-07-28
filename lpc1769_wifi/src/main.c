@@ -12,6 +12,8 @@ int main(void) {
 
     	esp01_host_mode();
 
+    	esp01_host_check();
+
     }
 
     //uint8_t answer[RX_BUFFER_LENGTH];

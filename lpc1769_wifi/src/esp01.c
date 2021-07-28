@@ -136,8 +136,28 @@ ESP01_STATE esp01_host_mode( void ){
 	/* Clean answer array */
 	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
 
-	/* Disabling echo */
+	/* Configure the module to act as an access point */
 	esp01_command( "AT+CWMODE=2", 11, answer, sizeof(answer) );
+
+	/* Check response */
+	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
+		return ESP01_OK;
+
+	else
+		return ESP01_ERROR;
+}
+
+
+/* Check the access point settings */
+ESP01_STATE esp01_host_check( void ){
+
+	uint8_t answer[64];
+
+	/* Clean answer array */
+	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
+
+	/* Query configuration of ESP01 softAP mode */
+	esp01_command( "AT+CWSAP?", 9, answer, sizeof(answer) );
 
 	/* Check response */
 	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
@@ -151,5 +171,19 @@ ESP01_STATE esp01_host_mode( void ){
 /* Set the ESP01 in client mode */
 ESP01_STATE esp01_client_mode( void ){
 
+	uint8_t answer[4];
+
+	/* Clean answer array */
+	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
+
+	/* Configure the module to act as a client */
+	esp01_command( "AT+CWMODE=1", 11, answer, sizeof(answer) );
+
+	/* Check response */
+	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
+		return ESP01_OK;
+
+	else
+		return ESP01_ERROR;
 
 }
