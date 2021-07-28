@@ -10,9 +10,8 @@
 /* Define the UART where the ESP01 is connected */
 #define UART3
 
-/* Set the length of the buffers */
+/* Set the length of the receiver ring buffer */
 #define RX_BUFFER_LENGTH	64
-#define TX_BUFFER_LENGTH	16
 
 
 
@@ -87,8 +86,15 @@ typedef enum{
 /* Module initialization */
 void esp01_init( void );
 
-/* Send a command to the module */
-uint8_t* esp01_command( uint8_t* command );
+
+/**
+ * @brief	Send a command to the ESP01
+ * @param	command	 : Pointer to the command to send
+ * @param	answer   : Pointer to bytes array to fill with the answer
+ * @param	numBytes : Size of the passed data array
+ * @return Nothing
+ */
+void esp01_command( uint8_t* command, uint8_t* answer, uint32_t numBytes );
 
 
 

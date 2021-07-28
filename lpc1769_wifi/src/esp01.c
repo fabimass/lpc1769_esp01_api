@@ -1,9 +1,11 @@
 
 #include "esp01.h"
 
-/* Communication buffers */
+/* Ring buffer to receive data */
 volatile uint8_t rx_buffer[RX_BUFFER_LENGTH];
-volatile uint8_t tx_buffer[TX_BUFFER_LENGTH];
+
+/* This index mantains the current position in the ring buffer */
+volatile uint8_t index = 0;
 
 /* ESP01 state flag */
 volatile ESP01_STATE esp01_flag = ESP01_WAITING;
@@ -15,8 +17,6 @@ void UART_HANDLER (void)
 	/* This is a mini buffer where I momentarily store the read from the FIFO */
 	static uint8_t rx[8];
 
-	/* This index mantains the current position in the ring buffer */
-	static uint8_t index = 0;
 
 	/* This mantains the value of the last byte received */
 	static uint8_t last_char;
@@ -73,13 +73,21 @@ void esp01_init( void ){
 	NVIC_EnableIRQ(UART_INTERRUPT);
 
 
+	uint8_t answer[10];
+
+	/* Check communication */
+	esp01_command( "AT", answer, 10 );
+
 }
 
 
 /* Send a command to the module */
-uint8_t* esp01_command( uint8_t* command ){
+void esp01_command( uint8_t* command, uint8_t* answer, uint32_t numBytes ){
 
 	uint32_t i=0;
+
+	/* Saves the current position in the ring buffer */
+	uint32_t start=index;
 
 	/* Go trough the string received sending each byte through the UART */
 	while ( command[i] != '\0' ){
@@ -98,5 +106,10 @@ uint8_t* esp01_command( uint8_t* command ){
 	/* Reset the flag */
 	esp01_flag = ESP01_WAITING;
 
-	return rx_buffer;
+	/* Fill the passed array */
+	for ( i=0 ; i<numBytes ; i++){
+
+		answer[i] = rx_buffer[start + i];
+	}
+
 }
