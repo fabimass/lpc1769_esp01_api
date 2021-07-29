@@ -6,13 +6,15 @@ int main(void) {
 
 	uint32_t aa;
 
+	ESP01_AP test;
+
     SystemCoreClockUpdate();
 
     if ( esp01_init() == ESP01_OK ){
 
     	esp01_host_mode();
 
-    	esp01_host_check();
+    	test = esp01_host_check();
 
     }
     else{

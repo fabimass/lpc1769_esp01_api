@@ -157,9 +157,9 @@ ESP01_STATE esp01_host_mode( void ){
 
 
 /* Check the access point settings */
-ESP01_STATE esp01_host_check( void ){
+ESP01_AP esp01_host_check( void ){
 
-	uint8_t answer[64];
+	uint8_t answer[96];
 
 	/* Clean answer array */
 	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
@@ -167,12 +167,46 @@ ESP01_STATE esp01_host_check( void ){
 	/* Query configuration of ESP01 softAP mode */
 	esp01_command( "AT+CWSAP?", 9, answer, sizeof(answer) );
 
-	/* Check response */
-	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
-		return ESP01_OK;
+	uint32_t delimiters[4];
+	uint32_t j=0;
 
-	else
-		return ESP01_ERROR;
+	/* Find the delimiters inside the response */
+	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) {
+
+		if ( answer[i]==':' || answer[i]==',' ){
+
+			delimiters[j] = i;
+			j++;
+			if (j>=4) break;
+		}
+
+	}
+
+	ESP01_AP ap_settings;
+
+	/* Initialize the structure clean */
+	ap_settings.chn[0] = '\0';
+	ap_settings.chn[1] = '\0';
+	ap_settings.ecn = '\0';
+	for ( uint32_t i=0 ; i<20 ; i++ ){
+		ap_settings.ssid[i] = '\0';
+		ap_settings.pwd[i] = '\0';
+	}
+
+	/* Get the network name */
+	for( uint32_t i=0 ; i<delimiters[1]-delimiters[0]-3 ; i++ ){ ap_settings.ssid[i]=answer[delimiters[0]+2+i]; }
+
+	/* Get the network password */
+	for( uint32_t i=0 ; i<delimiters[2]-delimiters[1]-3 ; i++ ){ ap_settings.pwd[i]=answer[delimiters[1]+2+i]; }
+
+	/* Get the channel used */
+	for( uint32_t i=0 ; i<delimiters[3]-delimiters[2]-1 ; i++ ){ ap_settings.chn[i]=answer[delimiters[2]+1+i]; }
+
+	/* Get the network security */
+	ap_settings.ecn = answer[delimiters[3]+1];
+
+
+	return ap_settings;
 }
 
 

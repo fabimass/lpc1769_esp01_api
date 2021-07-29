@@ -86,7 +86,7 @@ typedef enum{
 typedef struct{
 	uint8_t ssid[20];    /* Name of the wifi access point (max. 20 characters) */
 	uint8_t pwd[20];	 /* Password (max. 20 characters) */
-	uint8_t chn;         /* Channel id, 1 2 3 ... 14 */
+	uint8_t chn[2];      /* Channel id, 1 2 3 ... 14 */
 	uint8_t ecn;		 /* Encryption, 0 = OPEN, 2 = WPA_PSK, 3 = WPA2_PSK, 4 = WPA_WPA2_PSK */
 }ESP01_AP;
 
@@ -114,6 +114,13 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
  * @return  OK if success or ERROR
  */
 ESP01_STATE esp01_host_mode( void );
+
+
+/**
+ * @brief	Check the access point settings
+ * @return  Structure with the access point settings
+ */
+ESP01_AP esp01_host_check( void );
 
 
 /**
