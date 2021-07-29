@@ -87,7 +87,7 @@ typedef struct{
 	uint8_t ssid[20];    /* Name of the wifi access point (max. 20 characters) */
 	uint8_t pwd[20];	 /* Password (max. 20 characters) */
 	uint8_t chn;         /* Channel id, 1 2 3 ... 14 */
-	uint8_t ecn;		 /* Encryption, 0 = OPEN, 2 = WPA_PSK, 3 = WPA2_PSK, 4 = WPA_WPA2_PSK
+	uint8_t ecn;		 /* Encryption, 0 = OPEN, 2 = WPA_PSK, 3 = WPA2_PSK, 4 = WPA_WPA2_PSK */
 }ESP01_AP;
 
 

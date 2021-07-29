@@ -116,8 +116,16 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
 	Chip_UART_SendByte(UART_POINTER, '\r');
 	Chip_UART_SendByte(UART_POINTER, '\n');
 
+	uint32_t timeout_counter = 10000000;
+
 	/* Wait until it receives the answer */
-	while ( esp01_flag != ESP01_READY );
+	while ( esp01_flag == ESP01_BUSY ){
+
+		timeout_counter--;
+
+		if ( timeout_counter==0 ){ esp01_flag = ESP01_ERROR; }
+
+	}
 
 	/* Fill the passed array */
 	for ( uint32_t i=0 ; i<numBytesToRead ; i++){

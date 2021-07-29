@@ -15,6 +15,9 @@ int main(void) {
     	esp01_host_check();
 
     }
+    else{
+    	aa =0;
+    }
 
     //uint8_t answer[RX_BUFFER_LENGTH];
     //esp01_command("AT", answer, RX_BUFFER_LENGTH);
