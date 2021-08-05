@@ -56,9 +56,9 @@ ESP01_STATE esp01_init( void ){
 	Chip_IOCON_PinMux(LPC_IOCON,TX_PORT,TX_PIN,IOCON_MODE_INACT,PIN_FUNCTION);
 	Chip_IOCON_PinMux(LPC_IOCON,RX_PORT,RX_PIN,IOCON_MODE_INACT,PIN_FUNCTION);
 
-	/* Set up UART in 115200 bauds, 8 bits transmission + 1 stop bit */
+	/* Set up UART in 9600 bauds, 8 bits transmission + 1 stop bit */
 	Chip_UART_Init(UART_POINTER);
-	Chip_UART_SetBaud(UART_POINTER, 115200);
+	Chip_UART_SetBaud(UART_POINTER, 9600);
 	Chip_UART_ConfigData(UART_POINTER, (UART_LCR_WLEN8 | UART_LCR_SBS_1BIT));
 
 	/* Enable and reset FIFOs. Set interruption trigger level of 8 bytes */
@@ -73,7 +73,8 @@ ESP01_STATE esp01_init( void ){
 	NVIC_EnableIRQ(UART_INTERRUPT);
 
 
-	uint8_t answer[4];
+	uint8_t answer[8];
+
 
 	/* Clean answer array */
 	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
@@ -81,11 +82,13 @@ ESP01_STATE esp01_init( void ){
 	/* Disabling echo */
 	esp01_command( "ATE0", 4, answer, sizeof(answer) );
 
+
 	/* Clean answer array */
 	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
 
 	/* Check communication */
 	esp01_command( "AT", 2, answer, sizeof(answer) );
+
 
 	/* Check response */
 	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
@@ -127,10 +130,17 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
 
 	}
 
+	uint32_t j=0;
+
 	/* Fill the passed array */
 	for ( uint32_t i=0 ; i<numBytesToRead ; i++){
 
-		answer[i] = rx_buffer[start + i];
+		if ( (start + j) >= RX_BUFFER_LENGTH ){
+			start = 0;
+			j = 0;
+		}
+		answer[i] = rx_buffer[start + j];
+		j++;
 	}
 
 }
@@ -207,6 +217,69 @@ ESP01_AP esp01_host_check( void ){
 
 
 	return ap_settings;
+}
+
+
+/* Check the access point settings */
+ESP01_STATE esp01_host_config( ESP01_AP settings ){
+
+	uint8_t answer[4];
+
+	/* Clean answer array */
+	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
+
+	uint8_t command[96];
+
+	/* Construct the command */
+	command[0] = 'A';
+	command[1] = 'T';
+	command[2] = '+';
+	command[3] = 'C';
+	command[4] = 'W';
+	command[5] = 'S';
+	command[6] = 'A';
+	command[7] = 'P';
+	command[8] = '=';
+	command[9] = '"';
+
+	uint32_t j = 0;
+	while ( settings.ssid[j] != '\0' ){
+		command[j+10] = settings.ssid[j];
+		j++;
+	}
+
+	command[j+10] = '"';
+	command[j+11] = ',';
+	command[j+12] = '"';
+
+	uint32_t k = 0;
+	while ( settings.pwd[k] != '\0' ){
+		command[j+13+k] = settings.pwd[k];
+		k++;
+	}
+
+	command[j+13+k] = '"';
+	command[j+14+k] = ',';
+
+	uint32_t l = 0;
+	while ( settings.chn[l] != '\0' ){
+		command[j+15+k+l] = settings.chn[l];
+		l++;
+	}
+
+	command[j+15+k+l] = ',';
+	command[j+16+k+l] = settings.ecn;
+
+
+	/* Set configuration of softAP mode */
+	esp01_command( command, j+16+k+l+1, answer, sizeof(answer) );
+
+	/* Check response */
+	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
+		return ESP01_OK;
+
+	else
+		return ESP01_ERROR;
 }
 
 

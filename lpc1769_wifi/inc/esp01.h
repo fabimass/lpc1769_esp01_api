@@ -124,6 +124,14 @@ ESP01_AP esp01_host_check( void );
 
 
 /**
+ * @brief	Set up the access point
+ * @param   settings : Structure with the access point settings to set
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_host_config( ESP01_AP settings );
+
+
+/**
  * @brief	Set the ESP01 in client mode
  * @return  OK if success or ERROR
  */
