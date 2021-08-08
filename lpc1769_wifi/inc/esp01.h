@@ -12,7 +12,7 @@
 /**
  * @brief	Set the length of the receiver ring buffer
  */
-#define RX_BUFFER_LENGTH	64
+#define RX_BUFFER_LENGTH	96
 
 
 /**
@@ -76,7 +76,8 @@ typedef enum{
 	ESP01_READY,
 	ESP01_BUSY,
 	ESP01_OK,
-	ESP01_ERROR
+	ESP01_ERROR,
+	ESP01_TIMEOUT
 }ESP01_STATE;
 
 
@@ -93,7 +94,7 @@ typedef struct{
 
 /**
  * @brief	Initialize the ESP01
- * @return  OK if success or ERROR
+ * @return  ESP01_OK if success or ESP01_ERROR if failure
  */
 ESP01_STATE esp01_init( void );
 
@@ -104,9 +105,9 @@ ESP01_STATE esp01_init( void );
  * @param   numBytesToSend : Size of the passed command
  * @param	answer         : Pointer to bytes array to fill with the answer
  * @param	numBytesToRead : Size of the passed answer data array
- * @return  Nothing
+ * @return  ESP01_OK, ESP01_ERROR or ESP01_TIMEOUT
  */
-void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead );
+ESP01_STATE esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead );
 
 
 /**
