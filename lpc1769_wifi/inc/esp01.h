@@ -81,12 +81,15 @@ typedef enum{
 }ESP01_STATE;
 
 
+#define MAX_SSID	20
+#define MAX_PWD		20
+
 /**
  * @brief	Access point configuration
  */
 typedef struct{
-	uint8_t ssid[20];    /* Name of the wifi access point (max. 20 characters) */
-	uint8_t pwd[20];	 /* Password (max. 20 characters) */
+	uint8_t ssid[MAX_SSID];    /* Name of the wifi access point (max. 20 characters) */
+	uint8_t pwd[MAX_PWD];	 /* Password (max. 20 characters) */
 	uint8_t chn[2];      /* Channel id, 1 2 3 ... 14 */
 	uint8_t ecn;		 /* Encryption, 0 = OPEN, 2 = WPA_PSK, 3 = WPA2_PSK, 4 = WPA_WPA2_PSK */
 }ESP01_AP;
