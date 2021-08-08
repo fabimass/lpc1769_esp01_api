@@ -112,7 +112,13 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
 	/* Go trough the string received sending each byte through the UART */
 	for ( uint32_t i=0 ; i<numBytesToSend ; i++ ){
 
+		/* Add a delay every 16 bytes, to let the FIFO empty */
+		if ( (i!=0) && (i%16==0) ){
+			for (uint32_t delay=0 ; delay<1000000 ; delay++);
+		}
+
 		Chip_UART_SendByte(UART_POINTER, command[i]);
+
 	}
 
 	/* The command has to end with \r\n in order to be recognized by the ESP01 */
@@ -228,7 +234,7 @@ ESP01_AP esp01_host_check( void ){
 }
 
 
-/* Check the access point settings */
+/* Set the access point settings */
 ESP01_STATE esp01_host_config( ESP01_AP settings ){
 
 	uint8_t answer[4];
