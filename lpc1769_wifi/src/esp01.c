@@ -177,21 +177,6 @@ ESP01_AP esp01_host_check( void ){
 	/* Query configuration of ESP01 softAP mode */
 	esp01_command( "AT+CWSAP?", 9, answer, sizeof(answer) );
 
-	uint32_t delimiters[4];
-	uint32_t j=0;
-
-	/* Find the delimiters inside the response */
-	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) {
-
-		if ( answer[i]==':' || answer[i]==',' ){
-
-			delimiters[j] = i;
-			j++;
-			if (j>=4) break;
-		}
-
-	}
-
 	ESP01_AP ap_settings;
 
 	/* Initialize the structure clean */
@@ -203,18 +188,41 @@ ESP01_AP esp01_host_check( void ){
 		ap_settings.pwd[i] = '\0';
 	}
 
-	/* Get the network name */
-	for( uint32_t i=0 ; i<delimiters[1]-delimiters[0]-3 ; i++ ){ ap_settings.ssid[i]=answer[delimiters[0]+2+i]; }
+	if (esp01_flag == ESP01_OK){
 
-	/* Get the network password */
-	for( uint32_t i=0 ; i<delimiters[2]-delimiters[1]-3 ; i++ ){ ap_settings.pwd[i]=answer[delimiters[1]+2+i]; }
+		uint32_t delimiters[] = {0,0,0,0};
+		uint32_t j=0;
 
-	/* Get the channel used */
-	for( uint32_t i=0 ; i<delimiters[3]-delimiters[2]-1 ; i++ ){ ap_settings.chn[i]=answer[delimiters[2]+1+i]; }
+		/* Find the delimiters inside the response */
+		for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) {
 
-	/* Get the network security */
-	ap_settings.ecn = answer[delimiters[3]+1];
+			if ( (answer[i]==':' && j==0) || (answer[i]==',' && j>0) ){
 
+				delimiters[j] = i;
+				j++;
+				if (j>=4) break;
+			}
+
+		}
+
+		/* Get the network name */
+		if ( (delimiters[1] > delimiters[0]) && (delimiters[1] < sizeof(answer)) )
+			for( uint32_t i=0 ; i<delimiters[1]-delimiters[0]-3 ; i++ ){ ap_settings.ssid[i]=answer[delimiters[0]+2+i]; }
+
+		/* Get the network password */
+		if ( (delimiters[2] > delimiters[1]) && (delimiters[2] < sizeof(answer)) )
+			for( uint32_t i=0 ; i<delimiters[2]-delimiters[1]-3 ; i++ ){ ap_settings.pwd[i]=answer[delimiters[1]+2+i]; }
+
+		/* Get the channel used */
+		if ( (delimiters[3] > delimiters[2]) && (delimiters[3] < sizeof(answer)) )
+			for( uint32_t i=0 ; i<delimiters[3]-delimiters[2]-1 ; i++ ){ ap_settings.chn[i]=answer[delimiters[2]+1+i]; }
+
+		/* Get the network security */
+		if ( (delimiters[3] < sizeof(answer)) )
+			ap_settings.ecn = answer[delimiters[3]+1];
+
+
+	}
 
 	return ap_settings;
 }
