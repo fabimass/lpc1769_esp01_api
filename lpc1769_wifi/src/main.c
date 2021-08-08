@@ -1,38 +1,46 @@
 
 #include "esp01.h"
 
+#define HOST
+
 
 int main(void) {
 
-	uint32_t aa;
+	SystemCoreClockUpdate();
 
-	ESP01_AP my_ap = {
-			.ssid = "ESP_FABI",
+
+#ifdef HOST
+
+	/* Access point configuration */
+	ESP01_AP ap = {
+			.ssid = "MY_ACCESS_POINT",
 			.pwd = "test_wifi",
 			.chn = '6',
 			.ecn = '3',
 	};
 
-	ESP01_AP test;
+	/* This is for validating the result */
+	ESP01_AP ap_test;
 
-	uint8_t answer[32];
+	/* Initialization */
+    if ( esp01_init()== ESP01_OK ){
 
-    SystemCoreClockUpdate();
-
-    if ( esp01_init() == ESP01_OK ){
-
+    	/* Put the module to work as an access point */
     	esp01_host_mode();
 
-    	//esp01_host_config( my_ap );
+    	/* Check the current access point configuration */
+    	ap_test = esp01_host_check();
 
-    	esp01_command( "AT+CWSAP_DEF=\"FABI\",\"AAAABBBB\",5,3", 34, answer, sizeof(answer) );
+    	/* Set our own configuration */
+    	esp01_host_config(ap);
 
-    	test = esp01_host_check();
+    	/* Check correct configuration */
+    	ap_test = esp01_host_check();
 
     }
-    else{
-    	aa =0;
-    }
+
+#endif
+
 
 
     volatile static int i = 0 ;
