@@ -17,9 +17,11 @@ void UART_HANDLER (void)
 	/* This is a mini buffer where I momentarily store the read from the FIFO */
 	static uint8_t rx[8];
 
-
-	/* This mantains the value of the last byte received */
-	static uint8_t last_char;
+	/* Arrays for response checking */
+	static uint8_t r_ok[] = "OK";
+	static uint8_t r_error[] = "ERROR";
+	static uint8_t index_ok = 0;
+	static uint8_t index_error = 0;
 
 
 	/* Read 8 bytes from the FIFO */
@@ -37,11 +39,34 @@ void UART_HANDLER (void)
 		index++;
 		if ( index >= RX_BUFFER_LENGTH ) { index = 0; }
 
-		/* Checks for the OK statement */
-		if ( last_char=='O' && rx[i]=='K' ) { esp01_flag = ESP01_READY; }
 
-		/* Update the last byte analyzed */
-		last_char = rx[i];
+		/* Checks for the OK statement */
+		if ( rx[i] == r_ok[index_ok] ){
+
+			index_ok++;
+			if ( index_ok >= sizeof(r_ok)-1 ){
+				esp01_flag = ESP01_OK;
+			}
+
+		}
+		else{
+			index_ok = 0;
+		}
+
+		/* Checks for the ERROR statement */
+		if ( rx[i] == r_error[index_error] ){
+
+			index_error++;
+			if ( index_error >= sizeof(r_error)-1 ){
+				esp01_flag = ESP01_ERROR;
+			}
+
+		}
+		else{
+			index_error = 0;
+		}
+
+
 
 	}
 
@@ -59,7 +84,7 @@ ESP01_STATE esp01_init( void ){
 	/* Set up UART in 9600 bauds, 8 bits transmission + 1 stop bit */
 	Chip_UART_Init(UART_POINTER);
 	Chip_UART_SetBaud(UART_POINTER, 9600);
-	Chip_UART_ConfigData(UART_POINTER, (UART_LCR_WLEN8 | UART_LCR_SBS_1BIT));
+	Chip_UART_ConfigData(UART_POINTER, (UART_LCR_WLEN8 | UART_LCR_SBS_1BIT | UART_LCR_PARITY_DIS));
 
 	/* Enable and reset FIFOs. Set interruption trigger level of 8 bytes */
 	Chip_UART_SetupFIFOS(UART_POINTER, (UART_FCR_FIFO_EN | UART_FCR_RX_RS | UART_FCR_TX_RS | UART_FCR_TRG_LEV2));
@@ -76,32 +101,21 @@ ESP01_STATE esp01_init( void ){
 	uint8_t answer[8];
 
 
-	/* Clean answer array */
-	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
-
 	/* Disabling echo */
-	esp01_command( "ATE0", 4, answer, sizeof(answer) );
+	if ( esp01_command( "ATE0", 4, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
 
-
-	/* Clean answer array */
-	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
 
 	/* Check communication */
-	esp01_command( "AT", 2, answer, sizeof(answer) );
+	if ( esp01_command( "AT", 2, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
 
 
-	/* Check response */
-	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
-		return ESP01_OK;
-
-	else
-		return ESP01_ERROR;
+	return ESP01_OK;
 
 }
 
 
 /* Send a command to the module */
-void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead ){
+ESP01_STATE esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, uint32_t numBytesToRead ){
 
 	/* Saves the current position in the ring buffer */
 	uint32_t start=index;
@@ -132,21 +146,37 @@ void esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* answer, 
 
 		timeout_counter--;
 
-		if ( timeout_counter==0 ){ esp01_flag = ESP01_ERROR; }
+		if ( timeout_counter==0 ){ esp01_flag = ESP01_TIMEOUT; }
 
 	}
 
-	uint32_t j=0;
+	if ( esp01_flag == ESP01_OK ){
 
-	/* Fill the passed array */
-	for ( uint32_t i=0 ; i<numBytesToRead ; i++){
+		uint32_t j=0;
 
-		if ( (start + j) >= RX_BUFFER_LENGTH ){
-			start = 0;
-			j = 0;
+		/* Fill the passed array */
+		for ( uint32_t i=0 ; i<numBytesToRead ; i++){
+
+			if ( (start + j) >= RX_BUFFER_LENGTH ){
+				start = 0;
+				j = 0;
+			}
+			answer[i] = rx_buffer[start + j];
+			j++;
 		}
-		answer[i] = rx_buffer[start + j];
-		j++;
+
+		esp01_flag = ESP01_READY;
+		return ESP01_OK;
+	}
+
+	if ( esp01_flag == ESP01_ERROR ){
+		esp01_flag = ESP01_READY;
+		return ESP01_ERROR;
+	}
+
+	if ( esp01_flag == ESP01_TIMEOUT ){
+		esp01_flag = ESP01_READY;
+		return ESP01_TIMEOUT;
 	}
 
 }
@@ -157,18 +187,12 @@ ESP01_STATE esp01_host_mode( void ){
 
 	uint8_t answer[4];
 
-	/* Clean answer array */
-	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
-
 	/* Configure the module to act as an access point */
-	esp01_command( "AT+CWMODE=2", 11, answer, sizeof(answer) );
+	if ( esp01_command( "AT+CWMODE=2", 11, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; };
 
-	/* Check response */
-	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
-		return ESP01_OK;
 
-	else
-		return ESP01_ERROR;
+	return ESP01_OK;
+
 }
 
 
@@ -179,9 +203,6 @@ ESP01_AP esp01_host_check( void ){
 
 	/* Clean answer array */
 	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
-
-	/* Query configuration of ESP01 softAP mode */
-	esp01_command( "AT+CWSAP?", 9, answer, sizeof(answer) );
 
 	ESP01_AP ap_settings;
 
@@ -194,7 +215,8 @@ ESP01_AP esp01_host_check( void ){
 		ap_settings.pwd[i] = '\0';
 	}
 
-	if (esp01_flag == ESP01_OK){
+	/* Query configuration of ESP01 softAP mode */
+	if ( esp01_command( "AT+CWSAP?", 9, answer, sizeof(answer) ) == ESP01_OK ){
 
 		uint32_t delimiters[] = {0,0,0,0};
 		uint32_t j=0;
@@ -239,9 +261,6 @@ ESP01_STATE esp01_host_config( ESP01_AP settings ){
 
 	uint8_t answer[4];
 
-	/* Clean answer array */
-	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
-
 	uint8_t command[96];
 
 	/* Construct the command */
@@ -256,44 +275,57 @@ ESP01_STATE esp01_host_config( ESP01_AP settings ){
 	command[8] = '=';
 	command[9] = '"';
 
-	uint32_t j = 0;
-	while ( settings.ssid[j] != '\0' ){
-		command[j+10] = settings.ssid[j];
-		j++;
-	}
-
-	command[j+10] = '"';
-	command[j+11] = ',';
-	command[j+12] = '"';
-
+	uint32_t j = 10;
 	uint32_t k = 0;
-	while ( settings.pwd[k] != '\0' ){
-		command[j+13+k] = settings.pwd[k];
+
+	/* Add the network name */
+	while ( settings.ssid[k] != '\0' ){
+		command[j] = settings.ssid[k];
+		j++;
 		k++;
 	}
 
-	command[j+13+k] = '"';
-	command[j+14+k] = ',';
+	command[j] = '"';
+	j++;
+	command[j] = ',';
+	j++;
+	command[j] = '"';
+	j++;
 
 	uint32_t l = 0;
-	while ( settings.chn[l] != '\0' ){
-		command[j+15+k+l] = settings.chn[l];
+
+	/* Add the password */
+	while ( settings.pwd[l] != '\0' ){
+		command[j] = settings.pwd[l];
+		j++;
 		l++;
 	}
 
-	command[j+15+k+l] = ',';
-	command[j+16+k+l] = settings.ecn;
+	command[j] = '"';
+	j++;
+	command[j] = ',';
+	j++;
+
+	uint32_t m = 0;
+
+	/* Add the wifi channel */
+	while ( settings.chn[m] != '\0' ){
+		command[j] = settings.chn[m];
+		j++;
+		m++;
+	}
+
+	command[j] = ',';
+	j++;
+	command[j] = settings.ecn;
+	j++;
 
 
 	/* Set configuration of softAP mode */
-	esp01_command( command, j+16+k+l+1, answer, sizeof(answer) );
+	if ( esp01_command( command, j, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
 
-	/* Check response */
-	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
-		return ESP01_OK;
+	return ESP01_OK;
 
-	else
-		return ESP01_ERROR;
 }
 
 
@@ -302,17 +334,9 @@ ESP01_STATE esp01_client_mode( void ){
 
 	uint8_t answer[4];
 
-	/* Clean answer array */
-	for ( uint32_t i=0 ; i<sizeof(answer) ; i++ ) { answer[i]='\0'; }
-
 	/* Configure the module to act as a client */
-	esp01_command( "AT+CWMODE=1", 11, answer, sizeof(answer) );
+	if ( esp01_command( "AT+CWMODE=1", 11, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
 
-	/* Check response */
-	if ( answer[0]=='\r' && answer[1]=='\n' && answer[2]=='O' && answer[3]=='K' )
-		return ESP01_OK;
-
-	else
-		return ESP01_ERROR;
+	return ESP01_OK;
 
 }
