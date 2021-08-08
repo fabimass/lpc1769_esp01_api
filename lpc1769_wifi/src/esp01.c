@@ -261,7 +261,7 @@ ESP01_STATE esp01_host_config( ESP01_AP settings ){
 
 	uint8_t answer[4];
 
-	uint8_t command[96];
+	uint8_t command[56 + MAX_SSID + MAX_PWD];
 
 	/* Construct the command */
 	command[0] = 'A';
@@ -279,7 +279,7 @@ ESP01_STATE esp01_host_config( ESP01_AP settings ){
 	uint32_t k = 0;
 
 	/* Add the network name */
-	while ( settings.ssid[k] != '\0' ){
+	while ( settings.ssid[k] != '\0' && k<MAX_SSID){
 		command[j] = settings.ssid[k];
 		j++;
 		k++;
@@ -295,7 +295,7 @@ ESP01_STATE esp01_host_config( ESP01_AP settings ){
 	uint32_t l = 0;
 
 	/* Add the password */
-	while ( settings.pwd[l] != '\0' ){
+	while ( settings.pwd[l] != '\0' && l<MAX_PWD){
 		command[j] = settings.pwd[l];
 		j++;
 		l++;
@@ -309,7 +309,7 @@ ESP01_STATE esp01_host_config( ESP01_AP settings ){
 	uint32_t m = 0;
 
 	/* Add the wifi channel */
-	while ( settings.chn[m] != '\0' ){
+	while ( settings.chn[m] != '\0' && m<2){
 		command[j] = settings.chn[m];
 		j++;
 		m++;
