@@ -340,3 +340,52 @@ ESP01_STATE esp01_client_mode( void ){
 	return ESP01_OK;
 
 }
+
+
+/* Check for a specific access point */
+ESP01_STATE esp01_client_check( uint8_t* network ){
+
+	uint8_t count=0;
+
+	/* Count the number of characters in the network name */
+	while ( network[count] != '\0' ){
+		count++;
+	}
+
+	uint8_t command[11 + MAX_SSID];
+
+	/* Construct the command */
+	command[0] = 'A';
+	command[1] = 'T';
+	command[2] = '+';
+	command[3] = 'C';
+	command[4] = 'W';
+	command[5] = 'L';
+	command[6] = 'A';
+	command[7] = 'P';
+	command[8] = '=';
+	command[9] = '"';
+
+	uint8_t i=0;
+
+	for ( i=0 ; i<count ; i++ ){
+
+		if ( i > MAX_SSID ){
+			break;
+		}
+
+		else{
+			command[i] = network[i];
+		}
+	}
+
+	command[10+i] = '"';
+
+	uint8_t answer[96];
+
+	/* Check signal */
+	if ( esp01_command( command, 11+i, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
+
+	return ESP01_OK;
+
+}
