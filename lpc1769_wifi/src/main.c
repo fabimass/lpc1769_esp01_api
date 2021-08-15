@@ -1,7 +1,7 @@
 
 #include "esp01.h"
 
-#define HOST
+#define CLIENT
 
 
 int main(void) {
@@ -41,6 +41,25 @@ int main(void) {
 
 #endif
 
+
+#ifdef CLIENT
+
+	/* Initialization */
+    if ( esp01_init()== ESP01_OK ){
+
+    	/* Put the module to work as a client */
+    	esp01_client_mode();
+
+    	/* Check for network signal */
+    	if ( esp01_client_check( "MyWifi" ) == ESP01_OK ){
+
+
+
+    	}
+
+    }
+
+#endif
 
 
     volatile static int i = 0 ;

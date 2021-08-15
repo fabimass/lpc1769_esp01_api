@@ -124,22 +124,28 @@ ESP01_STATE esp01_command( uint8_t* command, uint32_t numBytesToSend, uint8_t* a
 	esp01_flag = ESP01_BUSY;
 
 	/* Go trough the string received sending each byte through the UART */
-	for ( uint32_t i=0 ; i<numBytesToSend ; i++ ){
+	for ( uint32_t i=0 ; i<numBytesToSend+2 ; i++ ){
 
 		/* Add a delay every 16 bytes, to let the FIFO empty */
 		if ( (i!=0) && (i%16==0) ){
 			for (uint32_t delay=0 ; delay<1000000 ; delay++);
 		}
 
-		Chip_UART_SendByte(UART_POINTER, command[i]);
+		/* The command has to end with \r\n in order to be recognized by the ESP01 */
+		if ( i>=numBytesToSend ) {
+
+			if ( i==numBytesToSend ) { Chip_UART_SendByte(UART_POINTER, '\r'); }
+			if ( i==numBytesToSend+1 ) { Chip_UART_SendByte(UART_POINTER, '\n'); }
+		}
+
+		else{
+			Chip_UART_SendByte(UART_POINTER, command[i]);
+		}
 
 	}
 
-	/* The command has to end with \r\n in order to be recognized by the ESP01 */
-	Chip_UART_SendByte(UART_POINTER, '\r');
-	Chip_UART_SendByte(UART_POINTER, '\n');
 
-	uint32_t timeout_counter = 10000000;
+	uint32_t timeout_counter = 100000000;
 
 	/* Wait until it receives the answer */
 	while ( esp01_flag == ESP01_BUSY ){
@@ -375,7 +381,7 @@ ESP01_STATE esp01_client_check( uint8_t* network ){
 		}
 
 		else{
-			command[i] = network[i];
+			command[10 + i] = network[i];
 		}
 	}
 
@@ -385,6 +391,28 @@ ESP01_STATE esp01_client_check( uint8_t* network ){
 
 	/* Check signal */
 	if ( esp01_command( command, 11+i, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
+
+
+	uint8_t index=0;
+
+	/* Checks for the network name in the answer */
+	for ( i=0 ; i<sizeof(answer) ; i++ ){
+
+		if ( answer[i] == network[index] ){
+
+			index++;
+			if ( index >= sizeof(network)-1 ){
+				esp01_flag = ESP01_OK;
+				break;
+			}
+
+		}
+		else{
+			index = 0;
+		}
+	}
+
+	if ( i==sizeof(answer) ) { return ESP01_ERROR; }
 
 	return ESP01_OK;
 
