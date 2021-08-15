@@ -13,8 +13,8 @@ int main(void) {
 
 	/* Access point configuration */
 	ESP01_AP ap = {
-			.ssid = "MY_ACCESS_POINT",
-			.pwd = "test_wifi",
+			.ssid = "MyWifi",
+			.pwd = "Password123",
 			.chn = '6',
 			.ecn = '3',
 	};
@@ -53,7 +53,17 @@ int main(void) {
     	/* Check for network signal */
     	if ( esp01_client_check( "MyWifi" ) == ESP01_OK ){
 
+    		/* Connects to the access point */
+    		if ( esp01_client_connect( "MyWifi", "Password123" ) == ESP01_OK ){
 
+
+    			/* Here you are connected to the wifi network */
+
+
+    		}
+
+    		/* Disconnects from the access point */
+    		esp01_client_disconnect();
 
     	}
 

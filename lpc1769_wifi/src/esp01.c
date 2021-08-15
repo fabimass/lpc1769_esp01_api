@@ -20,8 +20,10 @@ void UART_HANDLER (void)
 	/* Arrays for response checking */
 	static uint8_t r_ok[] = "OK";
 	static uint8_t r_error[] = "ERROR";
+	static uint8_t r_fail[] = "FAIL";
 	static uint8_t index_ok = 0;
 	static uint8_t index_error = 0;
+	static uint8_t index_fail = 0;
 
 
 	/* Read 8 bytes from the FIFO */
@@ -64,6 +66,19 @@ void UART_HANDLER (void)
 		}
 		else{
 			index_error = 0;
+		}
+
+		/* Checks for the FAIL statement */
+		if ( rx[i] == r_fail[index_fail] ){
+
+			index_fail++;
+			if ( index_fail >= sizeof(r_fail)-1 ){
+				esp01_flag = ESP01_ERROR;
+			}
+
+		}
+		else{
+			index_fail = 0;
 		}
 
 
@@ -351,13 +366,6 @@ ESP01_STATE esp01_client_mode( void ){
 /* Check for a specific access point */
 ESP01_STATE esp01_client_check( uint8_t* network ){
 
-	uint8_t count=0;
-
-	/* Count the number of characters in the network name */
-	while ( network[count] != '\0' ){
-		count++;
-	}
-
 	uint8_t command[11 + MAX_SSID];
 
 	/* Construct the command */
@@ -372,28 +380,27 @@ ESP01_STATE esp01_client_check( uint8_t* network ){
 	command[8] = '=';
 	command[9] = '"';
 
-	uint8_t i=0;
+	uint32_t j = 10;
+	uint32_t k = 0;
 
-	for ( i=0 ; i<count ; i++ ){
-
-		if ( i > MAX_SSID ){
-			break;
-		}
-
-		else{
-			command[10 + i] = network[i];
-		}
+	/* Add the network name */
+	while ( network[k] != '\0' && k<MAX_SSID){
+		command[j] = network[k];
+		j++;
+		k++;
 	}
 
-	command[10+i] = '"';
+	command[j] = '"';
+	j++;
 
 	uint8_t answer[96];
 
 	/* Check signal */
-	if ( esp01_command( command, 11+i, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
+	if ( esp01_command( command, j, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
 
 
-	uint8_t index=0;
+	uint32_t index=0;
+	uint32_t i=0;
 
 	/* Checks for the network name in the answer */
 	for ( i=0 ; i<sizeof(answer) ; i++ ){
@@ -413,6 +420,75 @@ ESP01_STATE esp01_client_check( uint8_t* network ){
 	}
 
 	if ( i==sizeof(answer) ) { return ESP01_ERROR; }
+
+	return ESP01_OK;
+
+}
+
+
+/* Connect to an access point */
+ESP01_STATE esp01_client_connect( uint8_t* network, uint8_t* password ){
+
+	uint8_t command[11 + MAX_SSID + MAX_PWD];
+
+	/* Construct the command */
+	command[0] = 'A';
+	command[1] = 'T';
+	command[2] = '+';
+	command[3] = 'C';
+	command[4] = 'W';
+	command[5] = 'J';
+	command[6] = 'A';
+	command[7] = 'P';
+	command[8] = '=';
+	command[9] = '"';
+
+	uint32_t j=10;
+	uint32_t k=0;
+
+	/* Add the network name */
+	while ( network[k] != '\0' && k<MAX_SSID){
+		command[j] = network[k];
+		j++;
+		k++;
+	}
+
+	command[j] = '"';
+	j++;
+	command[j] = ',';
+	j++;
+	command[j] = '"';
+	j++;
+
+	uint32_t l = 0;
+
+	/* Add the password */
+	while ( password[l] != '\0' && l<MAX_PWD){
+		command[j] = password[l];
+		j++;
+		l++;
+	}
+
+	command[j] = '"';
+	j++;
+
+	uint8_t answer[96];
+
+	/* Connects to the AP */
+	if ( esp01_command( command, j, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
+
+	return ESP01_OK;
+
+}
+
+
+/* Disconnect from an access point */
+ESP01_STATE esp01_client_disconnect( void ){
+
+	uint8_t answer[4];
+
+	/* Disconnects from the AP */
+	if ( esp01_command( "AT+CWQAP", 8, answer, sizeof(answer) ) != ESP01_OK ) { return ESP01_ERROR; }
 
 	return ESP01_OK;
 

@@ -144,10 +144,26 @@ ESP01_STATE esp01_client_mode( void );
 
 /**
  * @brief	Check for a specific access point
+ * @param   network: String with the network name
  * @return  OK if success or ERROR
  */
 ESP01_STATE esp01_client_check( uint8_t* network );
 
+
+/**
+ * @brief	Connect to an access point
+ * @param   network: String with the network name
+ * @param   password: String with the network password
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_client_connect( uint8_t* network, uint8_t* password );
+
+
+/**
+ * @brief	Disconnect from an access point
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_client_disconnect( void );
 
 
 #endif /* ESP01_H_ */
