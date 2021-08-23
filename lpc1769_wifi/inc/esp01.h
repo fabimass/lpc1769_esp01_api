@@ -175,7 +175,7 @@ ESP01_STATE esp01_client_disconnect( void );
 /**
  * @brief	Send an http request
  * @param   request 		: This is the request type. Ex: GET, POST, PUT or DELETE
- * @param   host 			: The host that you want to communicate with. Ex: www.mywebsite.com
+ * @param   host 			: The host that you want to communicate with. Ex: www.myserver.com
  * @param   port			: Specific port. Ex: 8080
  * @param   endpoint 		: Specific endpoint. Ex: /my_endpoint or just /
  * @param	answer         	: Pointer to bytes array to fill with the answer
@@ -183,6 +183,7 @@ ESP01_STATE esp01_client_disconnect( void );
  * @return  OK if success or ERROR
  */
 ESP01_STATE esp01_client_httprequest( uint8_t* request, uint8_t* host, uint8_t* port, uint8_t* endpoint, uint8_t* answer, uint32_t numBytesToRead );
+
 
 /**
  * @brief	Send data through http
