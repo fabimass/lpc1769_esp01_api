@@ -59,6 +59,38 @@ int main(void) {
 
     			/* Here you are connected to the wifi network */
 
+    			uint8_t led_state[1];
+    			uint32_t delay;
+
+    			Chip_GPIO_SetPinDIROutput(LPC_GPIO, 0, 22);
+
+    			while(1){
+
+    				/* Make an http request to the server, which returns the led state */
+    				if ( esp01_client_httprequest( "GET", "www.myserver.com", "8080", "/led", led_state, 1 ) == ESP01_OK ){
+
+    			    	/* Turn on/off the led according to the server response */
+    					if(led_state[0] == '0'){
+    			    		Chip_GPIO_SetPinState(LPC_GPIO, 0, 22, false);
+    			    	}
+    			    	if(led_state[0] == '1'){
+    			    	    Chip_GPIO_SetPinState(LPC_GPIO, 0, 22, true);
+    			    	}
+
+    			    	/* Set a delay for not overloading the server */
+    			    	delay = 10000000;
+
+    			    	while(delay>0){
+    			    		delay--;
+    			    	}
+
+    			    }
+
+    				else{
+
+    					break;
+    				}
+    			}
 
     		}
 
@@ -70,6 +102,7 @@ int main(void) {
     }
 
 #endif
+
 
 
     volatile static int i = 0 ;

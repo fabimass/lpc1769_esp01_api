@@ -77,12 +77,18 @@ typedef enum{
 	ESP01_BUSY,
 	ESP01_OK,
 	ESP01_ERROR,
-	ESP01_TIMEOUT
+	ESP01_TIMEOUT,
+	ESP01_CLOSED
 }ESP01_STATE;
 
 
 #define MAX_SSID	30
 #define MAX_PWD		20
+#define MAX_REQ		6
+#define MAX_HOST	30
+#define MAX_PORT	4
+#define MAX_ENDP	20
+
 
 /**
  * @brief	Access point configuration
@@ -165,5 +171,25 @@ ESP01_STATE esp01_client_connect( uint8_t* network, uint8_t* password );
  */
 ESP01_STATE esp01_client_disconnect( void );
 
+
+/**
+ * @brief	Send an http request
+ * @param   request 		: This is the request type. Ex: GET, POST, PUT or DELETE
+ * @param   host 			: The host that you want to communicate with. Ex: www.mywebsite.com
+ * @param   port			: Specific port. Ex: 8080
+ * @param   endpoint 		: Specific endpoint. Ex: /my_endpoint or just /
+ * @param	answer         	: Pointer to bytes array to fill with the answer
+ * @param	numBytesToRead 	: Size of the passed answer data array
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_client_httprequest( uint8_t* request, uint8_t* host, uint8_t* port, uint8_t* endpoint, uint8_t* answer, uint32_t numBytesToRead );
+
+/**
+ * @brief	Send data through http
+ * @param   data 			: Pointer to the data to send
+ * @param	numBytesToSend 	: Number of bytes to send
+ * @return  OK if success or ERROR
+ */
+ESP01_STATE esp01_client_httpdata( uint8_t* data, uint32_t numBytesToSend );
 
 #endif /* ESP01_H_ */
